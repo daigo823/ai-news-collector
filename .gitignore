@@ -1,0 +1,7 @@
+.env
+seen_ids.json
+collector.log
+cron.log
+__pycache__/
+*.pyc
+.venv/
