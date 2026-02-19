@@ -343,6 +343,101 @@ def create_notion_page(article: dict, summary: str):
     logger.info(f"  -> Notion page created: {article['title'][:60]}")
 
 
+# ================== Podcast 生成 ==================
+
+def generate_podcast_script(articles: list) -> str:
+    """収集した全記事からラジオ番組風の日本語スクリプトを生成する"""
+    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+    articles_text = "\n\n".join([
+        f"【{a['source']}】{a['title']}\n{a.get('summary', a.get('raw_summary', ''))[:500]}"
+        for a in articles
+    ])
+
+    prompt = f"""以下の本日のAIニュース記事をもとに、ラジオ番組風の日本語ナレーションスクリプトを作成してください。
+
+{articles_text}
+
+要件：
+- 冒頭は「おはようございます。今日のAIニュースをお届けします。」で始める
+- 各記事を自然なナレーションでつなぐ（「続いて」「また」「次に」などの接続詞を使う）
+- 専門用語はわかりやすく言い換える
+- 全体で3〜4分程度（約900〜1200文字）
+- 締めは「以上、今日のAIニュースでした。また明日。」で終える
+- マークダウン記号は使わず、読み上げに適したプレーンテキストのみで出力する
+"""
+
+    message = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=1500,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return message.content[0].text
+
+
+def create_podcast_mp3(script: str) -> bytes:
+    """OpenAI TTS APIでスクリプトをMP3に変換する"""
+    from openai import OpenAI
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+    response = client.audio.speech.create(
+        model="tts-1",
+        voice="nova",
+        input=script,
+        response_format="mp3",
+    )
+    return response.content
+
+
+def save_podcast_to_notion(script: str, date_str: str):
+    """Notionに本日のPodcastスクリプトページを作成する"""
+    database_id = os.environ["NOTION_DATABASE_ID"]
+
+    # スクリプトを段落ブロックに分割
+    blocks = []
+    for para in script.split("\n"):
+        para = para.strip()
+        if not para:
+            continue
+        # 1ブロックあたり2000文字制限
+        while len(para) > 2000:
+            blocks.append({
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {"rich_text": [{"type": "text", "text": {"content": para[:2000]}}]},
+            })
+            para = para[2000:]
+        blocks.append({
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": {"rich_text": [{"type": "text", "text": {"content": para}}]},
+        })
+
+    payload = {
+        "parent": {"database_id": database_id},
+        "properties": {
+            "Name": {"title": [{"text": {"content": f"📻 {date_str} AI News Podcast"}}]},
+            "Source": {"select": {"name": "Podcast"}},
+            "Tag": {"select": {"name": "Podcast"}},
+            "URL": {"url": "https://github.com"},
+            "Published": {"date": {"start": date_str}},
+        },
+        "children": blocks[:100],
+    }
+
+    resp = requests.post(
+        "https://api.notion.com/v1/pages",
+        headers=notion_headers(),
+        json=payload,
+        timeout=30,
+    )
+    if resp.status_code not in (200, 201):
+        logger.error(f"Notion Podcast page error [{resp.status_code}]: {resp.text}")
+        resp.raise_for_status()
+
+    logger.info(f"  -> Notion Podcast page created: {date_str}")
+
+
 # ================== メイン ==================
 
 def main():
@@ -356,6 +451,7 @@ def main():
 
     seen_ids = load_seen_ids()
     new_seen: set = set()
+    all_articles: list = []  # Podcast用に全記事を蓄積
 
     for source in SOURCES:
         articles = fetch_feed(source, seen_ids)
@@ -364,6 +460,8 @@ def main():
                 logger.info(f"Summarizing: {article['title'][:60]}")
                 summary = summarize(article)
                 create_notion_page(article, summary)
+                article["summary"] = summary
+                all_articles.append(article)
                 new_seen.add(article["id"])
             except Exception as e:
                 logger.error(f"Failed to process [{article['title'][:40]}]: {e}")
@@ -372,6 +470,22 @@ def main():
     save_seen_ids(seen_ids)
 
     logger.info(f"=== Done. {len(new_seen)} article(s) processed ===")
+
+    # 新規記事があった日だけPodcastを生成
+    if all_articles and os.environ.get("OPENAI_API_KEY"):
+        logger.info("=== Generating Podcast ===")
+        try:
+            date_str = datetime.now(JST).strftime("%Y-%m-%d")
+            script = generate_podcast_script(all_articles)
+            mp3_data = create_podcast_mp3(script)
+            mp3_path = Path(__file__).parent / f"podcast_{date_str}.mp3"
+            mp3_path.write_bytes(mp3_data)
+            logger.info(f"MP3 saved: {mp3_path.name} ({len(mp3_data)//1024}KB)")
+            save_podcast_to_notion(script, date_str)
+        except Exception as e:
+            logger.error(f"Podcast generation failed: {e}")
+    elif not os.environ.get("OPENAI_API_KEY"):
+        logger.info("OPENAI_API_KEY not set, skipping Podcast generation")
 
 
 if __name__ == "__main__":

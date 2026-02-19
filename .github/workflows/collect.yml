@@ -25,7 +25,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: seen_ids.json
-          key: seen-ids-${{ hashFiles('seen_ids.json') }}
+          key: seen-ids-latest
           restore-keys: seen-ids-
 
       - name: Run collector
@@ -33,6 +33,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python collector.py
 
       - name: Save seen_ids
@@ -41,3 +42,12 @@ jobs:
         with:
           path: seen_ids.json
           key: seen-ids-${{ github.run_id }}
+
+      - name: Upload Podcast MP3
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: podcast-${{ github.run_id }}
+          path: podcast_*.mp3
+          retention-days: 30
+          if-no-files-found: ignore
