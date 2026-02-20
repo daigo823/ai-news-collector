@@ -67,6 +67,13 @@ SOURCES = [
         # AI・エージェント関連記事に絞り込む
         "filter_keywords": ["AI", "LLM", "Agentforce", "machine learning", "agent", "artificial intelligence"],
     },
+    {
+        "name": "Salesforce Blog",
+        "feed_url": "https://www.salesforce.com/blog/feed/",
+        "tag": "Salesforce",
+        # AI・エージェント関連記事に絞り込む（非AI記事が多いためフィルタ必須）
+        "filter_keywords": ["AI", "LLM", "Agentforce", "machine learning", "agent", "artificial intelligence"],
+    },
 ]
 
 # 既処理済み記事のIDを保存するファイル
