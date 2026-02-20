@@ -478,7 +478,8 @@ def main():
             date_str = datetime.now(JST).strftime("%Y-%m-%d")
             script = generate_podcast_script(all_articles)
             mp3_data = create_podcast_mp3(script)
-            mp3_path = Path(__file__).parent / f"podcast_{date_str}.mp3"
+            mp3_path = Path(__file__).parent / "docs" / f"podcast_{date_str}.mp3"
+            mp3_path.parent.mkdir(parents=True, exist_ok=True)
             mp3_path.write_bytes(mp3_data)
             logger.info(f"MP3 saved: {mp3_path.name} ({len(mp3_data)//1024}KB)")
             save_podcast_to_notion(script, date_str)

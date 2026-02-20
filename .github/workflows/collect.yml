@@ -5,6 +5,9 @@ on:
     - cron: "0 17 * * *"  # 毎日 UTC 17:00 = JST 02:00
   workflow_dispatch:       # 手動実行ボタンも有効化
 
+permissions:
+  contents: write           # docs/ への git push に必須
+
 jobs:
   collect:
     runs-on: ubuntu-latest
@@ -12,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # 全履歴取得（git push時に必要）
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -43,11 +48,15 @@ jobs:
           path: seen_ids.json
           key: seen-ids-${{ github.run_id }}
 
-      - name: Upload Podcast MP3
-        uses: actions/upload-artifact@v4
+      - name: Generate RSS feed
         if: always()
-        with:
-          name: podcast-${{ github.run_id }}
-          path: podcast_*.mp3
-          retention-days: 30
-          if-no-files-found: ignore
+        run: python generate_feed.py
+
+      - name: Push docs to GitHub Pages
+        if: always()
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add docs/
+          git diff --staged --quiet || git commit -m "Podcast update $(date -u +'%Y-%m-%d')"
+          git push origin main
