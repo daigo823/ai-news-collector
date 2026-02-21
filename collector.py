@@ -41,16 +41,31 @@ SOURCES = [
         # 公式RSSは廃止済み → コミュニティ管理のミラーフィードを使用
         "feed_url": "https://raw.githubusercontent.com/Olshansk/rss-feeds/refs/heads/main/feeds/feed_anthropic_news.xml",
         "tag": "Anthropic",
+        # エンタープライズ・製品・事例関連に絞り込む
+        "filter_keywords": [
+            "enterprise", "agent", "Claude", "API", "deployment", "business",
+            "partner", "case study", "customers", "tools", "model",
+        ],
     },
     {
         "name": "OpenAI Blog",
         "feed_url": "https://openai.com/blog/rss.xml",
         "tag": "OpenAI",
+        # エンタープライズ・製品・事例関連に絞り込む
+        "filter_keywords": [
+            "enterprise", "agent", "GPT", "API", "deployment", "business",
+            "partner", "case study", "customers", "o1", "o3",
+        ],
     },
     {
         "name": "Google DeepMind Blog",
         "feed_url": "https://deepmind.google/blog/rss.xml",
         "tag": "Google",
+        # エンタープライズ・製品・事例関連に絞り込む
+        "filter_keywords": [
+            "enterprise", "agent", "Gemini", "API", "deployment", "business",
+            "partner", "Vertex", "application", "product",
+        ],
     },
     {
         "name": "a16z Newsletter",
@@ -73,6 +88,17 @@ SOURCES = [
         "tag": "Salesforce",
         # AI・エージェント関連記事に絞り込む（非AI記事が多いためフィルタ必須）
         "filter_keywords": ["AI", "LLM", "Agentforce", "machine learning", "agent", "artificial intelligence"],
+    },
+    {
+        "name": "VentureBeat AI",
+        # エンタープライズAI導入事例・CXO戦略・製品発表に特化したメディア
+        "feed_url": "https://venturebeat.com/category/ai/feed/",
+        "tag": "VentureBeat",
+        "filter_keywords": [
+            "enterprise", "agent", "agentic", "deployment", "adoption", "case study",
+            "ROI", "implementation", "CTO", "CEO", "strategy", "Salesforce", "Microsoft",
+            "Google", "AWS", "SAP", "ServiceNow", "workflow", "automation",
+        ],
     },
 ]
 
@@ -230,7 +256,8 @@ def summarize(article: dict) -> str:
     """Claude API で記事のサマリを日本語で生成する"""
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
-    prompt = f"""以下のAI技術ブログ記事を日本語で簡潔にサマリしてください。
+    prompt = f"""以下のAI関連記事を日本語でサマリしてください。
+エンタープライズAI導入・活用の観点から重要なポイントを抽出してください。
 
 タイトル: {article['title']}
 URL: {article['url']}
@@ -241,8 +268,9 @@ URL: {article['url']}
 ## 概要
 （2〜3文で要点を説明）
 
-## 主なポイント
-- （箇条書き 3〜5項目）
+## ビジネスへの示唆
+- 関連する業種・部門（例：営業、カスタマーサポート、製造業など）
+- 導入・活用のポイント（箇条書き 2〜4項目）
 
 ## 重要度
 （High / Medium / Low とその理由を1文で）
@@ -361,16 +389,18 @@ def generate_podcast_script(articles: list) -> str:
         for a in articles
     ])
 
-    prompt = f"""以下の本日のAIニュース記事をもとに、ラジオ番組風の日本語ナレーションスクリプトを作成してください。
+    prompt = f"""以下の本日のAIニュース記事をもとに、経営者・ビジネスリーダー向けのラジオ番組風日本語ナレーションスクリプトを作成してください。
 
 {articles_text}
 
 要件：
-- 冒頭は「おはようございます。今日のAIニュースをお届けします。」で始める
+- 冒頭は「おはようございます。今日のエンタープライズAIニュースをお届けします。」で始める
+- ビジネスインパクト・導入事例・業界動向を中心に解説する
+- 経営者・CxO視点で「自社ではどう活用できるか」という視点を意識する
 - 各記事を自然なナレーションでつなぐ（「続いて」「また」「次に」などの接続詞を使う）
 - 専門用語はわかりやすく言い換える
 - 全体で3〜4分程度（約900〜1200文字）
-- 締めは「以上、今日のAIニュースでした。また明日。」で終える
+- 締めは「以上、今日のエンタープライズAIニュースでした。また明日。」で終える
 - マークダウン記号は使わず、読み上げに適したプレーンテキストのみで出力する
 """
 
