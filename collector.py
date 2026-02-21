@@ -399,14 +399,14 @@ def generate_podcast_script(articles: list) -> str:
 - 経営者・CxO視点で「自社ではどう活用できるか」という視点を意識する
 - 各記事を自然なナレーションでつなぐ（「続いて」「また」「次に」などの接続詞を使う）
 - 専門用語はわかりやすく言い換える
-- 全体で3〜4分程度（約900〜1200文字）
+- 全体で10分程度（約3000〜3500文字）を目標に、各記事を深く丁寧に解説する
 - 締めは「以上、今日のエンタープライズAIニュースでした。また明日。」で終える
 - マークダウン記号は使わず、読み上げに適したプレーンテキストのみで出力する
 """
 
     message = client.messages.create(
         model="claude-haiku-4-5",
-        max_tokens=1500,
+        max_tokens=4000,
         messages=[{"role": "user", "content": prompt}],
     )
     return message.content[0].text
