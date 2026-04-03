@@ -257,36 +257,40 @@ def summarize(article: dict) -> str:
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
     prompt = f"""以下のAI関連記事を日本語でサマリしてください。
-エンタープライズAI導入・活用の観点から重要なポイントを抽出してください。
 
 タイトル: {article['title']}
 URL: {article['url']}
 本文抜粋:
 {article['raw_summary']}
 
-出力形式（マークダウン）:
-## 概要
-（2〜3文で要点を説明）
+出力形式：
 
-## ビジネスへの示唆
-- 関連する業種・部門（例：営業、カスタマーサポート、製造業など）
-- 導入・活用のポイント（箇条書き 2〜4項目）
+【どんなもの？】
+200〜300文字で、何が起きたか・何が発表されたかを説明する。
 
-## 重要度
-（High / Medium / Low とその理由を1文で）
+【これまでと何が違う？】
+従来のアプローチや競合と比べて何が新しいのかを2〜3文で。
+
+【ビジネスインパクトのキモはどこ？】
+日本の大企業（製造業・消費財・不動産・インフラ）への影響を2〜3文で。具体的な業種・部門に言及する。
+
+【信頼できる情報か？】
+発表元・根拠・実績の有無を踏まえて1文で評価する。
+
+【キーワード】
+3つ（例：Agentforce、製造業、自動化）
 """
 
     try:
         message = client.messages.create(
             model="claude-haiku-4-5",
-            max_tokens=600,
+            max_tokens=800,
             messages=[{"role": "user", "content": prompt}],
         )
         return message.content[0].text
     except Exception as e:
         logger.error(f"Claude API error: {e}")
         return f"サマリ生成に失敗しました: {e}"
-
 
 # ================== Notion 保存 ==================
 
