@@ -7,12 +7,19 @@
     <link>https://daigo823.github.io/ai-news-collector/</link>
     <description>毎日のAIニュースをお届けするPodcast。Anthropic・OpenAI・Google・a16z・Salesforceの最新情報を日本語でサマリします。</description>
     <language>ja</language>
-    <lastBuildDate>Tue, 14 Apr 2026 18:05:54 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 15 Apr 2026 18:07:49 GMT</lastBuildDate>
     <itunes:author>Daigo Mizoguchi</itunes:author>
     <itunes:summary>毎日のAIニュースをお届けするPodcast。Anthropic・OpenAI・Google・a16z・Salesforceの最新情報を日本語でサマリします。</itunes:summary>
     <itunes:category text="Technology"/>
     <itunes:explicit>false</itunes:explicit>
 
+    <item>
+      <title>2026-04-16 AI News</title>
+      <pubDate>Wed, 15 Apr 2026 15:00:00 GMT</pubDate>
+      <enclosure url="https://daigo823.github.io/ai-news-collector/podcast_2026-04-16.mp3" type="audio/mpeg" length="12486720"/>
+      <guid isPermaLink="true">https://daigo823.github.io/ai-news-collector/podcast_2026-04-16.mp3</guid>
+      <itunes:duration></itunes:duration>
+    </item>
     <item>
       <title>2026-04-15 AI News</title>
       <pubDate>Tue, 14 Apr 2026 15:00:00 GMT</pubDate>
