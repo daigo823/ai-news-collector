@@ -327,3 +327,47 @@ Slack App(Bot 2つ)                   コードの共通ライブラリ(pip pack
 - `ai-news-collector` は独立したツールとして存続し、Phase 0 で Mac mini に移住して「学習(記事・Podcast)」系の最初のデータソース兼、運用のカナリアになる。
 - Oputa 本体は新規 private リポジトリ `oputa` で開発する(人生データに関わる設計・プロンプトを含むため)。
 - この設計書は出発点としてここに置くが、以後の更新は `oputa` リポジトリ側で行う。
+
+---
+
+## 11. 既存 Oputa v0 の棚卸し(2026-08-09 立ち上げ分)
+
+> v0 のワークスペースは GitHub に無い可能性があるため、Notion「Oputa 日報」DB と Slack に残る痕跡から 2026-08-10 に再構築した「外部記憶」をここに固定する。一次情報は日報ページ「2026-08-09(日)」。
+
+### v0 の構成
+
+| 領域 | 内容 |
+|---|---|
+| 人格・設定 | `IDENTITY.md` / `SOUL.md` / `MEMORY.md` / `TOOLS.md` / `CLAUDE.md` — 参謀タイプ・敬語・事実と示唆を分ける、としてオンボーディング確定 |
+| 組織 | `org/account-intelligence/` — pov-strategist(manager)/ ir-researcher / industry-watcher の3名。department.yaml + board.json |
+| 知識 | `knowledge/accounts.md`(ホンダ/任天堂/神戸製鋼所/コベルコ建機。まずホンダで型を固める方針)、`projects.md`(HSJ AI中古車マッチング提案、POV 5点セット)、`infrastructure.md`(launchd/crontab 不可の記録と再調査不要リスト) |
+| スキル | `skills/photo-intake/` — 紙の写真を「原本保存 → 日次ノート記録 → タスク化」 |
+| cron | `cron/jobs.json` — honda-feed(8:00)/ weekly-brief / family-morning(7:00)。8/10 に日報 cron(22:42 → #oputa-daily)を追加 |
+| 監視 | `bin/gateway-supervisor.sh` / `bin/gateway-healthcheck.sh` — 常駐スーパーバイザ方式(そのMacでは launchd も crontab も動かないため) |
+| 配信ログ | `logs/delivery.jsonl`(8/10追加)— 「cron success ≠ 配信成功」の学びから、実行ログと配信を突合する |
+| Slack | #feed-honda / #exec-brief / #oputa-daily / 家族チャンネル(@Oputa が応答) |
+| Notion | 「Oputa 日報」DB(date / ひとこと / タグ / 要対応) |
+
+### v0 の学びを v1 に反映する
+
+1. **今の実行環境は launchd も crontab も動かない管理端末** → 自分の root を持てる専用機(Mac mini)の必要性は v0 で実証済み。gateway-supervisor 方式は Mac mini では launchd KeepAlive に置き換わる。
+2. **仕事(account-intelligence)と家族(family-morning、photo-intake)が同一ワークスペースに同居している** → §5 の Personal/Business 分離は理論ではなく、v0 の実データの引っ越し先問題である。
+3. **「実行成功と配信成功は別」** — 観測できない箇所を先に作る。v1 の全パイプラインで delivery.jsonl 方式(配信突合)を標準にする。
+4. **日報は Event Ledger の原型** — 8/9 の「日次ノートが無いと翌朝の再構築コストが高い」という気づきは、§3 の追記専用 Ledger がそのまま答えになっている。
+
+### 移行マップ(v0 → v1)
+
+| v0 の資産 | v1 での行き先 |
+|---|---|
+| IDENTITY / SOUL / MEMORY / TOOLS / CLAUDE.md | Personal Oputa の `agent/`(プロンプト資産として git 管理) |
+| account-intelligence 部門 + accounts.md + honda-feed + #feed-honda / #exec-brief | **Business Agent スタック**へ丸ごと |
+| family-morning / photo-intake / 家族Slack | Personal Oputa |
+| 日報 cron + Notion 日報DB | reflection パイプライン + Event Ledger へ昇格 |
+| gateway-supervisor / healthcheck | launchd(KeepAlive)に置き換え |
+
+### 最初の保険(Mac mini を待たずに今日やる)
+
+v0 が GitHub に無くても、動いている Mac のディスクには全ファイルが残っている。失われるのはその Mac が壊れた時なので:
+
+1. v0 ワークスペースでそのまま `git init` → private リポジトリへ push(`config.yaml` 内の認証情報と `logs/` は .gitignore)
+2. 以後は日報 cron(22:42)が毎晩 Notion に記憶を書くため、「思い出せない」問題は構造的に解消されていく
